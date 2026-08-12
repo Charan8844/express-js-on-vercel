@@ -5,7 +5,6 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const app = express()
 
-// Needed so req.body works for POST requests (Vapi sends JSON)
 app.use(express.json())
 
 // Home route - HTML
@@ -35,14 +34,12 @@ app.get('/', (req, res) => {
 app.get('/about', function (req, res) {
   res.sendFile(path.join(__dirname, '..', 'components', 'about.htm'))
 })
-// Example API endpoint - JSON
 app.get('/api-data', (req, res) => {
   res.json({
     message: 'Here is some sample API data',
     items: ['apple', 'banana', 'cherry'],
   })
 })
-// Health check
 app.get('/healthz', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() })
 })
@@ -58,14 +55,47 @@ app.post('/api/vapi-webhook', (req, res) => {
     let result
     switch (name) {
       case 'verify_customer':
-        result = { verified: true, customerName: args?.customerName || 'Customer' }
+        result = {
+          authenticated: true,
+          customer_id: 'CUST12345',
+          message: `Identity verified for ${args?.name || 'customer'}`,
+        }
         break
+
+      case 'get_account_details':
+        result = {
+          message: 'Account details retrieved',
+          overdue_amount: 4500,
+          days_overdue: 32,
+          last_payment: '2026-06-15',
+        }
+        break
+
       case 'log_promise_to_pay':
-        result = { logged: true, promiseDate: args?.date, amount: args?.amount }
+        result = {
+          logged: true,
+          promiseDate: args?.date,
+          amount: args?.amount,
+          message: 'Promise to pay has been logged',
+        }
         break
+
       case 'send_payment_link':
-        result = { sent: true, link: 'https://pay.example.com/mock-link' }
+        result = {
+          sent: true,
+          link: 'https://pay.example.com/mock-link',
+          message: 'Payment link sent successfully',
+        }
         break
+
+      case 'mark_disposition':
+        result = {
+          recorded: true,
+          disposition: args?.disposition || 'unspecified',
+          message: 'Call disposition recorded',
+        }
+        break
+
       default:
         result = { error: `Unknown tool: ${name}` }
     }
